@@ -10,6 +10,10 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 app = FastAPI()
 
+@app.post("/debug/test")
+def debug(payload: dict):
+    return {"echo": payload}
+
 @app.get("/")
 def health():
     return {"status": "HackRx API running 🚀"}
