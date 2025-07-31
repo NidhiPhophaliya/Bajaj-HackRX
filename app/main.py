@@ -10,6 +10,9 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 app = FastAPI()
 
+@app.get("/")
+def health():
+    return {"status": "HackRx API running 🚀"}
 
 
 @app.post("/hackrx/run", response_model=QueryResponse)
