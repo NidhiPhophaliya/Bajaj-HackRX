@@ -14,10 +14,18 @@ app = FastAPI()
 def health():
     return {"status": "HackRx API running 🚀"}
 
-@app.post("/hackrx/run", response_model=QueryResponse)
-async def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
+@app.middleware("http")
+async def log_all_requests(request: Request, call_next):
+    body = await request.body()
+    print("📥 RAW Incoming Body:", body.decode("utf-8"))
+    print("📥 Headers:", dict(request.headers))
+    response = await call_next(request)
+    return response
 
-    body_bytes = await request.body()
+
+@app.post("/hackrx/run", response_model=QueryResponse)
+def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
+
     print("🛠️ RAW BODY RECEIVED:", body_bytes.decode("utf-8"))
     print("📩 Incoming request payload:", payload.query)
     print("🔐 Authorization header:", authorization)
