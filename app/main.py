@@ -15,7 +15,10 @@ def health():
     return {"status": "HackRx API running 🚀"}
 
 @app.post("/hackrx/run", response_model=QueryResponse)
-def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
+async def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
+
+    body_bytes = await request.body()
+    print("🛠️ RAW BODY RECEIVED:", body_bytes.decode("utf-8"))
     print("📩 Incoming request payload:", payload.query)
     print("🔐 Authorization header:", authorization)
     print("🔑 Expected API_KEY from .env:", API_KEY)
