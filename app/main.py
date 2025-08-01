@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, Header
 from app.models.schema import QueryRequest, QueryResponse, JustificationItem
 from app.utils.search import SemanticSearch
 from app.utils.llm_decider import generate_decision
+from app.utils.embedder import Embedder
 import json, os
 from dotenv import load_dotenv
 
@@ -9,6 +10,16 @@ load_dotenv()
 
 API_KEY = os.getenv("API_KEY")
 app = FastAPI()
+
+# ✅ Embedder loading from Google Drive (replace IDs)
+embedder = Embedder()
+embedder.load_from_drive(
+    index_url="https://drive.google.com/uc?id=1GOSzA4PiEsDZupMEeNsuIEhKpbRMWgxl",
+    metadata_url="https://drive.google.com/uc?id=1MPkhB5L0TkXNivb1SjRlhYejDpP9Mp6v"
+)
+
+# ✅ Create the search engine once
+search_engine = SemanticSearch(embedder)
 
 @app.post("/debug/test")
 def debug(payload: dict):
@@ -18,7 +29,6 @@ def debug(payload: dict):
 def health():
     return {"status": "HackRx API running 🚀"}
 
-# ✅ Add this to support HEAD / and avoid 405 errors
 @app.head("/")
 def health_head():
     return
@@ -42,21 +52,14 @@ def run_handler(request: Request, payload: QueryRequest, authorization: str = He
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     try:
-        print("✅ Auth passed. Loading chunks...")
-        search_engine = SemanticSearch("app/data/chunks.csv")
-
         results_df = search_engine.search(payload.query)
         print(f"🔎 Search results found: {len(results_df)} rows")
 
         if results_df.empty:
-            print("⚠️ No chunks matched the query")
             raise HTTPException(status_code=404, detail="No relevant information found")
 
         top_chunks = results_df['text'].tolist()
-        print("📄 Top chunk preview:", top_chunks[:1])
-
         raw_output = generate_decision(payload.query, top_chunks)
-        print("🤖 LLM raw output:", raw_output)
 
         try:
             parsed = json.loads(raw_output)
@@ -64,10 +67,7 @@ def run_handler(request: Request, payload: QueryRequest, authorization: str = He
             print("❌ JSON parsing error:", je)
             raise HTTPException(status_code=500, detail="Invalid response from LLM")
 
-        print("✅ Parsed JSON:", parsed)
-
         justification_items = [JustificationItem(**j) for j in parsed.get('justification', [])]
-        print("🧾 Justification prepared")
 
         return QueryResponse(
             decision=parsed.get('decision', "No decision provided"),
