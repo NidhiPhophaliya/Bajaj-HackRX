@@ -30,7 +30,6 @@ async def log_all_requests(request: Request, call_next):
 @app.post("/hackrx/run", response_model=QueryResponse)
 def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
 
-    print("🛠️ RAW BODY RECEIVED:", body_bytes.decode("utf-8"))
     print("📩 Incoming request payload:", payload.query)
     print("🔐 Authorization header:", authorization)
     print("🔑 Expected API_KEY from .env:", API_KEY)
