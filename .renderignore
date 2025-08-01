@@ -1,0 +1,12 @@
+_pycache_/
+*.ipynb
+*.csv
+*.zip
+*.log
+*.mp4
+*.jpg
+*.png
+*.DS_Store
+.idea/
+.vscode/
+venv/
