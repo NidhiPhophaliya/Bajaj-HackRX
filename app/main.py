@@ -18,6 +18,11 @@ def debug(payload: dict):
 def health():
     return {"status": "HackRx API running 🚀"}
 
+# ✅ Add this to support HEAD / and avoid 405 errors
+@app.head("/")
+def health_head():
+    return
+
 @app.middleware("http")
 async def log_all_requests(request: Request, call_next):
     body = await request.body()
@@ -26,15 +31,12 @@ async def log_all_requests(request: Request, call_next):
     response = await call_next(request)
     return response
 
-
 @app.post("/hackrx/run", response_model=QueryResponse)
 def run_handler(request: Request, payload: QueryRequest, authorization: str = Header(None)):
-
     print("📩 Incoming request payload:", payload.query)
     print("🔐 Authorization header:", authorization)
     print("🔑 Expected API_KEY from .env:", API_KEY)
 
-    # Step 1: Auth check
     if not authorization or not authorization.startswith("Bearer ") or authorization.split()[1] != API_KEY:
         print("❌ Authorization failed")
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -43,7 +45,6 @@ def run_handler(request: Request, payload: QueryRequest, authorization: str = He
         print("✅ Auth passed. Loading chunks...")
         search_engine = SemanticSearch("app/data/chunks.csv")
 
-        # Step 2: Perform semantic search
         results_df = search_engine.search(payload.query)
         print(f"🔎 Search results found: {len(results_df)} rows")
 
@@ -54,11 +55,9 @@ def run_handler(request: Request, payload: QueryRequest, authorization: str = He
         top_chunks = results_df['text'].tolist()
         print("📄 Top chunk preview:", top_chunks[:1])
 
-        # Step 3: Generate decision using LLM
         raw_output = generate_decision(payload.query, top_chunks)
         print("🤖 LLM raw output:", raw_output)
 
-        # Step 4: Parse JSON response
         try:
             parsed = json.loads(raw_output)
         except json.JSONDecodeError as je:
@@ -67,7 +66,6 @@ def run_handler(request: Request, payload: QueryRequest, authorization: str = He
 
         print("✅ Parsed JSON:", parsed)
 
-        # Step 5: Format justification
         justification_items = [JustificationItem(**j) for j in parsed.get('justification', [])]
         print("🧾 Justification prepared")
 
