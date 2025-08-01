@@ -10,8 +10,6 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY")
 app = FastAPI()
 
-search_engine = SemanticSearch("app/data/chunks.csv")
-
 @app.post("/debug/test")
 def debug(payload: dict):
     return {"echo": payload}
