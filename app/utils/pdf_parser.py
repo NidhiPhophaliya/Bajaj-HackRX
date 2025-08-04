@@ -29,6 +29,7 @@ def extract_chunks_from_pdfs(pdf_paths, output_csv_path):
                     "text": chunk
                 })
 
+    df['text'] = df['text'].apply(lambda t: t[:1000])            
     df = pd.DataFrame(all_chunks)
     df.to_csv(output_csv_path, index=False)
     return df

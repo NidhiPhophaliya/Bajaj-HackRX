@@ -8,7 +8,7 @@ import pickle
 from sentence_transformers import SentenceTransformer
 
 class Embedder:
-    def __init__(self, model_name='all-MiniLM-L6-v2'):
+    def __init__(self, model_name='paraphrase-MiniLM-L3-v2'):
         self.model = SentenceTransformer(model_name)
         self.index = None
         self.metadata = None
@@ -30,6 +30,7 @@ class Embedder:
     def query(self, query_text, k=5):
         if self.index is None or self.metadata is None:
             raise ValueError("Index or metadata not loaded")
+        
         query_embedding = self.model.encode([query_text]).astype('float32')
         D, I = self.index.search(query_embedding, k)
         results = self.metadata.iloc[I[0]].copy()
